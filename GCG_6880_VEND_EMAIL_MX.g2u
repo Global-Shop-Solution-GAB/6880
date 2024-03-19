@@ -1,0 +1,364 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.f_Main..Create(BaseForm)
+Gui.f_Main..Caption("Vendor Email Maintenance (6880)")
+Gui.f_Main..Size(579,467)
+Gui.f_Main..MinX(0)
+Gui.f_Main..MinY(0)
+Gui.f_Main..Position(0,0)
+Gui.f_Main..AlwaysOnTop(False)
+Gui.f_Main..FontName("Tahoma")
+Gui.f_Main..FontSize(8.25)
+Gui.f_Main..ControlBox(True)
+Gui.f_Main..MaxButton(False)
+Gui.f_Main..MinButton(True)
+Gui.f_Main..MousePointer(0)
+Gui.f_Main..Moveable(True)
+Gui.f_Main..Sizeable(False)
+Gui.f_Main..ShowInTaskBar(True)
+Gui.f_Main..TitleBar(True)
+Gui.f_Main..Event(UnLoad,f_Main_UnLoad)
+Gui.f_Main.lblVendor.Create(Label,"Vendor:",True,38,13,0,7,12,True,0,"Tahoma",8.25,,0,0)
+Gui.f_Main.lblVendor.BorderStyle(0)
+Gui.f_Main.txtVendor.Create(TextBox,"",True,84,20,0,47,8,True,0,"Tahoma",8.25,,1)
+Gui.f_Main.txtVendor.TabStop(True)
+Gui.f_Main.txtVendor.TabIndex(1)
+Gui.f_Main.cmdVend_Brw.Create(Button)
+Gui.f_Main.cmdVend_Brw.Enabled(True)
+Gui.f_Main.cmdVend_Brw.Visible(True)
+Gui.f_Main.cmdVend_Brw.Zorder(0)
+Gui.f_Main.cmdVend_Brw.Size(23,20)
+Gui.f_Main.cmdVend_Brw.Position(134,8)
+Gui.f_Main.cmdVend_Brw.Caption("^")
+Gui.f_Main.cmdVend_Brw.FontName("Tahoma")
+Gui.f_Main.cmdVend_Brw.FontSize(8.25)
+Gui.f_Main.cmdVend_Brw.Event(Click,cmdVend_Brw_Click)
+Gui.f_Main.cmdVend_Brw.TabStop(True)
+Gui.f_Main.cmdVend_Brw.TabIndex(2)
+Gui.f_Main.cmdSave.Create(Button)
+Gui.f_Main.cmdSave.Enabled(True)
+Gui.f_Main.cmdSave.Visible(True)
+Gui.f_Main.cmdSave.Zorder(0)
+Gui.f_Main.cmdSave.Size(61,23)
+Gui.f_Main.cmdSave.Position(511,6)
+Gui.f_Main.cmdSave.Caption("Save")
+Gui.f_Main.cmdSave.FontName("Tahoma")
+Gui.f_Main.cmdSave.FontSize(8.25)
+Gui.f_Main.cmdSave.Event(Click,cmdSave_Click)
+Gui.f_Main.cmdSave.TabStop(True)
+Gui.f_Main.cmdSave.TabIndex(6)
+Gui.f_Main.cmdAdd.Create(Button)
+Gui.f_Main.cmdAdd.Enabled(True)
+Gui.f_Main.cmdAdd.Visible(True)
+Gui.f_Main.cmdAdd.Zorder(0)
+Gui.f_Main.cmdAdd.Size(39,23)
+Gui.f_Main.cmdAdd.Position(326,42)
+Gui.f_Main.cmdAdd.Caption("Add")
+Gui.f_Main.cmdAdd.FontName("Tahoma")
+Gui.f_Main.cmdAdd.FontSize(8.25)
+Gui.f_Main.cmdAdd.Event(Click,cmdAdd_Click)
+Gui.f_Main.cmdAdd.TabStop(True)
+Gui.f_Main.cmdAdd.TabIndex(5)
+Gui.f_Main.lblEmail.Create(Label,"Email:",True,28,13,0,17,48,True,0,"Tahoma",8.25,,0,0)
+Gui.f_Main.lblEmail.BorderStyle(0)
+Gui.f_Main.txtEmail.Create(TextBox,"",True,275,20,0,47,44,True,0,"Tahoma",8.25,,1)
+Gui.f_Main.txtEmail.TabStop(True)
+Gui.f_Main.txtEmail.TabIndex(4)
+Gui.f_Main.GsGcVendEmails.Create(GsGridControl)
+Gui.f_Main.GsGcVendEmails.Enabled(True)
+Gui.f_Main.GsGcVendEmails.Visible(True)
+Gui.f_Main.GsGcVendEmails.Zorder(0)
+Gui.f_Main.GsGcVendEmails.Size(574,355)
+Gui.f_Main.GsGcVendEmails.Position(2,78)
+Gui.f_Main.lblContactName.Create(Label,"Contact Name:",True,72,13,0,174,12,True,0,"Tahoma",8.25,,0,0)
+Gui.f_Main.lblContactName.BorderStyle(0)
+Gui.f_Main.txtContactName.Create(TextBox,"",True,117,20,0,248,8,True,0,"Tahoma",8.25,,1)
+Gui.f_Main.txtContactName.TabStop(True)
+Gui.f_Main.txtContactName.TabIndex(3)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.bError.Declare(Boolean)
+V.Global.bUnattended.Declare(Boolean)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.Try
+Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+
+'open the connection to the database
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN, V.Ambient.PUser, V.Ambient.PPass)
+
+'Load the grid
+F.Intrinsic.Control.CallSub(LoadGrid)
+
+'Format the Grid
+F.Intrinsic.Control.CallSub(FormatGrid)
+
+'show the form
+Gui.f_Main..Show()
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.LoadGrid.Start
+F.Intrinsic.Control.Try
+
+'check to make sure the datatable doesn't already exist
+F.Intrinsic.Control.If(V.DataTable.dtEmails.Exists,=,True)
+	F.Data.DataTable.Close("dtEmails")
+F.Intrinsic.Control.EndIf
+
+F.Data.DataTable.CreateFromSQL("dtEmails", "con", "SELECT * FROM GCG_6880_VEND_EMAIL ORDER BY VENDOR, CONTACT_NAME, CONTACT_EMAIL", True)
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadGrid.End
+
+Program.Sub.FormatGrid.Start
+F.Intrinsic.Control.Try
+V.Local.sGV.Declare(String)
+V.Local.sProperty.Declare(String)
+V.Local.sDefault.Declare(String)
+
+Gui.f_Main.GsGcVendEmails.AddGridviewFromDatatable("gvEmails", "dtEmails")
+V.Local.sGV.Set("gvEmails")
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "AllowSort", True)
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "AllowFilter", False)
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "OptionsViewShowGroupPanel", False)
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "OptionsViewColumnAutoWidth", True)
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "MultiSelect", False)
+Gui.f_Main.GsGcVendEmails.SetGridviewProperty(V.Local.sGV, "AllowDeleteRows", True)
+
+'set properites for the columns
+V.Local.sProperty.Set("Caption")
+V.Local.sDefault.Set(" ")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, "Vendor")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, "Contact Name")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty, "Email")
+
+V.Local.sProperty.Set("HeaderHAlignment")
+V.Local.sDefault.Set("Left")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty, V.Local.sDefault)
+
+V.Local.sProperty.Set("HeaderFontBold")
+V.Local.sDefault.Set("True")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty, V.Local.sDefault)
+
+V.Local.sProperty.Set("AllowEdit")
+V.Local.sDefault.Set("False")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty, True)
+
+V.Local.sProperty.Set("ReadOnly")
+V.Local.sDefault.Set("True")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, V.Local.sDefault)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty,False)
+
+V.Local.sProperty.Set("MinWidth")
+V.Local.sDefault.Set("150")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, 75)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, 100)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_EMAIL", V.Local.sProperty, V.Local.sDefault)
+
+
+V.Local.sProperty.Set("MaxWidth")
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "VENDOR", V.Local.sProperty, 75)
+Gui.f_Main.GsGcVendEmails.SetColumnProperty(V.Local.sGV, "CONTACT_NAME", V.Local.sProperty, 125)
+
+Gui.f_Main.GsGcVendEmails.MainView(V.Local.sGV)
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+
+Program.Sub.FormatGrid.End
+
+Program.Sub.cmdVend_Brw_Click.Start
+F.Intrinsic.Control.Try
+V.Local.sRet.Declare(String)
+
+F.Intrinsic.UI.Browser(300, "", V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet.Trim,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet, "*!*", V.Local.sRet)
+	Gui.f_Main.txtVendor.Text(V.Local.sRet(0).Trim)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdVend_Brw_Click.End
+
+Program.Sub.cmdAdd_Click.Start
+F.Intrinsic.Control.Try
+V.Local.sVendor.Declare(String)
+V.Local.sEmail.Declare(String)
+V.Local.sName.Declare(String)
+
+'set the variables from the screen
+V.Local.sVendor.Set(V.Screen.f_Main!txtVendor.Text)
+V.Local.sEmail.Set(V.Screen.f_Main!txtEmail.Text)
+V.Local.sName.Set(V.Screen.f_Main!txtContactName.Text)
+
+'check to make sure the vendor field isn't blank
+F.Intrinsic.Control.If(V.Local.sVendor.Trim,<>,"")
+	'check to make sure the email field isn't blank
+	F.Intrinsic.Control.If(V.Local.sEmail.Trim,<>,"")
+		'add the information to the datatable
+		F.Data.DataTable.AddRow("dtEmails", "VENDOR", V.Local.sVendor.Trim, "CONTACT_NAME", V.Local.sName.Trim, "CONTACT_EMAIL", V.Local.sEmail.Trim)
+		F.Data.DataTable.AcceptChanges("dtEmails")
+		
+		Gui.f_Main.txtContactName.Text("")
+		Gui.f_Main.txtEmail.Text("")
+	F.Intrinsic.Control.Else
+		F.Intrinsic.UI.Msgbox("You must enter an email before you can continue.", "Required Field")
+		Gui.f_Main.txtEmail.SetFocus
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox("You must select a Vendor before you can continue.", "Required Field")
+	Gui.f_Main.cmdVend_Brw.SetFocus
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdAdd_Click.End
+
+Program.Sub.cmdSave_Click.Start
+F.Intrinsic.Control.Try
+
+F.Intrinsic.UI.InvokeWaitDialog("Saving Records...", "Please Wait")
+'delete all the records from the custom table
+F.ODBC.Connection!con.Execute("DELETE FROM GCG_6880_VEND_EMAIL")
+
+'save changes to the datatable in case a row was deleted
+F.Data.DataTable.AcceptChanges("dtEmails")
+
+'save the grid to the custom table
+F.Data.DataTable.SaveToDB("dtEmails", "con", "GCG_6880_VEND_EMAIL", "VENDOR*!*CONTACT_NAME*!*CONTACT_EMAIL",256)
+
+F.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.UI.Msgbox("Records Saved!", "Success")
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdSave_Click.End
+
+Program.Sub.GsGcVendEmails_RowClick.Start
+F.Intrinsic.Control.Try
+V.Local.iRow.Declare(Long)
+V.Local.sVendor.Declare(String)
+V.Local.sEmail.Declare(String)
+V.Local.sContact.Declare(String)
+
+F.Intrinsic.Control.BlockEvents
+V.Local.iRow.Set(V.Args.RowIndex)
+V.Local.sVendor.Set(V.DataTable.dtEmails(V.Local.iRow).VENDOR!FieldValTrim)
+V.Local.sEmail.Set(V.DataTable.dtEmails(v.Local.iRow).CONTACT_EMAIL!FieldValTrim)
+V.Local.sContact.Set(V.DataTable.dtEmails(V.Local.iRow).CONTACT_NAME!FieldValTrim)
+
+'set the screen values
+Gui.f_Main.txtVendor.Text(V.Local.sVendor.Trim)
+Gui.f_Main.txtContactName.Text(V.Local.sContact.Trim)
+Gui.f_Main.txtEmail.Text(V.Local.sEmail.Trim)
+
+F.Intrinsic.Control.UnBlockEvents
+'delete the selected row from the datatable since it'll be added back to the grid after it's modified
+F.Data.DataTable.DeleteRow("dtEmails", V.Local.iRow)
+
+F.Data.DataTable.AcceptChanges("dtEmails")
+
+F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Vendor Email Maintenance", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.GsGcVendEmails_RowClick.End
+
+Program.Sub.f_Main_UnLoad.Start
+F.Intrinsic.Control.Try
+
+'close the connection to the DB
+F.ODBC.Connection!con.Close
+
+'end the script
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(ErrorMessage, "ErrorNumber", V.Ambient.ErrorNumber, "ErrorDescription", V.Ambient.ErrorDescription, "Subroutine", V.Ambient.CurrentSubroutine, "UNATTENDED", V.Global.bUnattended, "Project", "6880", "ProjectTitle", "Shipment Truck Load Builder", "Callback", "f_Main_UnLoad")
+F.Intrinsic.Control.EndTry
+Program.Sub.f_Main_UnLoad.End
+
+Program.Sub.ErrorMessage.Start
+'basic error message for replacing catch block
+'this is really just for when printing the message and ending program
+'pass error number, error description, current subroutine
+'optional callback sub, this will be called before ending
+'optional unattended parameters, those subs may not exist if not using them but won't be called
+F.Intrinsic.Control.Try
+
+V.Local.iError.Declare(Long)
+V.Local.sErrorDescription.Declare(String)
+V.Local.sSubroutine.Declare(String)
+V.Local.sError.Declare(String)
+V.Local.bExists.Declare(Boolean)
+V.Local.sCallback.Declare(String)
+
+V.Local.iError.Set(V.Args.ErrorNumber)
+V.Local.sErrorDescription.Set(V.Args.ErrorDescription)
+V.Local.sSubroutine.Set(V.Args.Subroutine)
+
+'make sure we aren't in an error loop
+F.Intrinsic.Control.If(V.Global.bError)
+	F.Intrinsic.Control.End
+
+F.Intrinsic.Control.EndIf
+V.Global.bError.Set(True)
+
+F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}", V.Caller.ScriptFile, V.Ambient.Newline, V.Local.sSubroutine, V.Local.iError, V.Local.sErrorDescription, V.Ambient.GABVersion, V.Local.sError)
+
+F.Intrinsic.Variable.ArgExists("UNATTENDED", V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	F.Intrinsic.Control.If(V.Args.UNATTENDED)
+		F.Intrinsic.Control.CallSub(UnattendedErrorMessage, "MESSAGE", V.Local.sError, "PROJECT", V.Args.PROJECT, "PROJECTTITLE", V.Args.PROJECTTITLE)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Variable.ArgExists("Callback", V.Local.bExists)
+F.Intrinsic.Control.If(V.Local.bExists)
+	V.Local.sCallback.Set(V.Args.Callback.Trim)
+	F.Intrinsic.Control.CallSub(V.Local.sCallback)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.Catch
+	F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Caller.ScriptFile,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+
+F.Intrinsic.Control.EndTry
+Program.Sub.ErrorMessage.End
+
+Program.Sub.Comments.Start
+${$5$}$20.1.8347.18428$}$1
+${$6$}$acollins$}$20221123175106544$}$h98hERc2yV72q0GaUGlwSaoK/aefTdVk3MDOmjKC8J848rvbVBkGf0bshSiJe5/T8w7K/TYYUfXmKvy9jyCBPg==
+Program.Sub.Comments.End
